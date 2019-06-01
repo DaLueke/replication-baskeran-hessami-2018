@@ -17,7 +17,10 @@ def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None):
 
 
     Returns:
-        RDD Plot
+        pd.DataFrame with two columns: 
+        1. "x_bin_mean" contains mean values for the margin of victory of a female in the mayor election.
+        2. "y_bin_mean" contains mean values for rank improvements of females at the subsequent council election. 
+        
     """
     
     # Find min and max of the running variable
