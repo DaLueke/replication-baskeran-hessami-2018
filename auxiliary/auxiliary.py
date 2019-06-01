@@ -1,108 +1,113 @@
-"""This module contains auxiliary function which we use in the example notebook."""
-import json
+""" This file contains auxiliary functions that are used in the student-project-DaLueke.py file.""" 
 
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
-from scipy.stats import norm
 import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
-from grmpy.estimate.estimate_output import calculate_mte
-from grmpy.read.read import read
-
-
-def process_data(df, output_file):
-    """This function adds squared and interaction terms to the Cainero data set."""
-
-    # Delete redundant columns\n",
-    for key_ in ['newid', 'caseid']:
-        del df[key_]
-
-    # Add squared terms
-    for key_ in ['mhgc', 'cafqt', 'avurate', 'lurate_17', 'numsibs', 'lavlocwage17']:
-        str_ = key_ + 'sq'
-        df[str_] = df[key_] ** 2
-
-    # Add interaction terms
-    for j in ['pub4', 'lwage5_17', 'lurate_17', 'tuit4c']:
-        for i in ['cafqt', 'mhgc', 'numsibs']:
-            df[j + i] = df[j] * df[i]
-
-    df.to_pickle(output_file + '.pkl')
-
+def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None):
+    """ Plots a Regression Discontinouity Design graph for binned observations. 
+    Uses non-parametric regression (LOWESS) to fit a curve on binned data.
     
-def plot_est_mte(rslt, file):
-    """This function calculates the marginal treatment effect for different quartiles of the
-    unobservable V. ased on the calculation results."""
+    Args: 
+        data: contains DataFrame that contains the data to plot (DataFrame)
+        x_var: determines variable on x-axis, passed as the column name (string)
+        y_var: determines variable on y_axis, passed as the column name (string)
+        nbins: defines number of equally sized bins (int)
+        ylimits: A tuple specifying the limits of the y axis (tuple)
 
-    init_dict = read(file)
-    data_frame = pd.read_pickle(init_dict['ESTIMATION']['file'])
 
-    # Define the Quantiles and read in the original results
-    quantiles = [0.0001] + np.arange(0.01, 1., 0.01).tolist() + [0.9999]
-    mte_ = json.load(open('data/mte_original.json', 'r'))
-    mte_original = mte_[1]
-    mte_original_d = mte_[0]
-    mte_original_u = mte_[2]
-
-    # Calculate the MTE and confidence intervals
-    mte = calculate_mte(rslt, init_dict, data_frame, quantiles)
-    mte = [i / 4 for i in mte]
-    mte_up, mte_d = calculate_cof_int(rslt, init_dict, data_frame, mte, quantiles)
-
-    # Plot both curves
-    ax = plt.figure(figsize=(17.5, 10)).add_subplot(111)
-
-    ax.set_ylabel(r"$B^{MTE}$", fontsize=24)
-    ax.set_xlabel("$u_D$", fontsize=24)
-    ax.tick_params(axis='both', which='major', labelsize=18)
-    ax.plot(quantiles, mte, label='grmpy $B^{MTE}$', color='blue', linewidth=4)
-    ax.plot(quantiles, mte_up, color='blue', linestyle=':', linewidth=3)
-    ax.plot(quantiles, mte_d, color='blue', linestyle=':', linewidth=3)
-    ax.plot(quantiles, mte_original, label='original$B^{MTE}$', color='orange', linewidth=4)
-    ax.plot(quantiles, mte_original_d, color='orange', linestyle=':',linewidth=3)
-    ax.plot(quantiles, mte_original_u, color='orange', linestyle=':', linewidth=3)
-    ax.set_ylim([-0.41, 0.51])
-    ax.set_xlim([-0.005, 1.005])
-
-    blue_patch = mpatches.Patch(color='blue', label='original $B^{MTE}$')
-    orange_patch = mpatches.Patch(color='orange', label='grmpy $B^{MTE}$')
-    plt.legend(handles=[blue_patch, orange_patch],prop={'size': 16})
-    plt.show()
-
-    return mte
-
-def calculate_cof_int(rslt, init_dict, data_frame, mte, quantiles):
-    """This function calculates the confidence interval of the marginal treatment effect."""
-
-    # Import parameters and inverse hessian matrix
-    hess_inv = rslt['AUX']['hess_inv'] / data_frame.shape[0]
-    params = rslt['AUX']['x_internal']
-
-    # Distribute parameters
-    dist_cov = hess_inv[-4:, -4:]
-    param_cov = hess_inv[:46, :46]
-    dist_gradients = np.array([params[-4], params[-3], params[-2], params[-1]])
-
-    # Process data
-    covariates = init_dict['TREATED']['order']
-    x = np.mean(data_frame[covariates]).tolist()
-    x_neg = [-i for i in x]
-    x += x_neg
-    x = np.array(x)
-
-    # Create auxiliary parameters
-    part1 = np.dot(x, np.dot(param_cov, x))
-    part2 = np.dot(dist_gradients, np.dot(dist_cov, dist_gradients))
-    # Prepare two lists for storing the values
-    mte_up = []
-    mte_d = []
-
-    # Combine all auxiliary parameters and calculate the confidence intervals
-    for counter, i in enumerate(quantiles):
-        value = part2 * (norm.ppf(i)) ** 2
-        aux = np.sqrt(part1 + value) / 4
-        mte_up += [mte[counter] + norm.ppf(0.95) * aux]
-        mte_d += [mte[counter] - norm.ppf(0.95) * aux]
-
-    return mte_up, mte_d
+    Returns:
+        RDD Plot
+    """
+    
+    # Find min and max of the running variable
+    x_var, y_var = data.loc[:,x_variable], data.loc[:,y_variable]
+    x_min = int(round(x_var.min()))
+    x_max = int(round(x_var.max()))
+    x_width = int(round(((abs(x_min) + abs(x_max)) / nbins)))
+    
+    # Get a list of tuples with borders of each bin. 
+    bins = []
+    for b in range(x_min, x_max, x_width):
+        bins.append((b, b + x_width))
+        
+    # Find bin for a given value
+    def find_bin(value, bins):
+        for count, b in enumerate(bins):
+            # Bins generally follow the structure [lower_bound, upper_bound), thus do not include the upper bound.
+            if (count < len(bins)-1):
+                if (value >= bins[count][0]) & (value < bins[count][1]): 
+                    bin_number = count
+            # The last bin, however, includes its upper bound.
+            else:
+                if (value >= bins[count][0]) & (value <= bins[count][1]): 
+                    bin_number = count 
+        return bin_number
+    
+    # Sort running data into bins
+    x_bin = np.zeros(len(x_var))
+    i=0
+    for value in x_var.values:
+        x_bin[i] = find_bin(value, bins)
+        i+=1
+    
+    # Write data needed for the plot into a DataFrame
+    df = pd.DataFrame(data = {'x_variable': x_var, 
+                              'y_variable': y_var,
+                              'x_bin': x_bin
+                             }
+                     )
+    # For each bin calculate the mean of affiliated values on the y-axis.
+    y_bin_mean = np.zeros(len(bins))
+    for n, b in enumerate(bins):
+        affiliated_y_values = df.loc[x_bin == n]
+        y_bin_mean[n] = affiliated_y_values.y_variable.mean()
+    
+    # For the x-axis take the mean of the bounds of each bin.
+    x_bin_mean = np.zeros(len(bins))
+    i=0
+    for e, t in enumerate(bins):
+        x_bin_mean[i] = (bins[e][0]+bins[e][1])/2
+        i+=1
+    
+    # Draw the actual plot for all bins of the running variable and their affiliated mean in the y-variable.
+    plt.scatter(x=x_bin_mean,
+                y=y_bin_mean, 
+                s=50, 
+                c='black', 
+               alpha=1)
+    plt.axvline(x=0)
+    if ~(ylimits == None): 
+        plt.ylim(ylimits)
+    plt.grid()
+    plt.show
+    #plt.ylim(-5, 5)
+    #### TODO: As a validity test: see if x_bin is as long as x_var is!
+    
+    ##### TESTING AREA ##### 
+    # Implement local polynomial regression 
+    import statsmodels as sm
+    untreated = x_bin_mean<0
+    treated = x_bin_mean>0
+    y_lowess_fit_untreated = sm.nonparametric.smoothers_lowess.lowess(
+        endog=y_bin_mean[0:int(nbins/2)], 
+        exog=x_bin_mean[0:int(nbins/2)], 
+        return_sorted=False, 
+        frac=0.8, 
+        it=3,
+        delta=0,
+    )
+    y_lowess_fit_treated = sm.nonparametric.smoothers_lowess.lowess(
+        endog=y_bin_mean[int(nbins/2):int(nbins+1)], 
+        exog=x_bin_mean[int(nbins/2):int(nbins+1)], 
+        return_sorted=False, 
+        frac=0.8,
+        it=3,
+        delta=0,
+    )
+    
+    plt.plot(x_bin_mean[0:int(nbins/2)], y_lowess_fit_untreated, color='r')
+    plt.plot(x_bin_mean[int(nbins/2):int(nbins+1)], y_lowess_fit_treated, color='r')
+    
+    
+    return pd.DataFrame(data=[x_bin_mean, y_bin_mean])
