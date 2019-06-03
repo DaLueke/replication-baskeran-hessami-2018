@@ -1,5 +1,5 @@
 """ This file contains auxiliary functions that are used in the student-project-DaLueke.py file.""" 
-
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from statsmodels.nonparametric.smoothers_lowess import lowess
@@ -83,7 +83,7 @@ def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None):
     if ~(ylimits == None): 
         plt.ylim(ylimits)
     plt.grid()
-    plt.show
+    
     #plt.ylim(-5, 5)
     #### TODO: As a validity test: see if x_bin is as long as x_var is!
     
@@ -111,6 +111,10 @@ def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None):
     
     plt.plot(x_bin_mean[0:int(nbins/2)], y_lowess_fit_untreated, color='r')
     plt.plot(x_bin_mean[int(nbins/2):int(nbins+1)], y_lowess_fit_treated, color='r')
+    plt.title(label='Figure 3: Regression Discontinuity Design Plot')
+    plt.xlabel('Binned margin of victory')
+    plt.ylabel('Normalized rank improvement')
+    plt.show
     
     
-    return pd.DataFrame(data=[x_bin_mean, y_bin_mean])
+    return #pd.DataFrame(data=[x_bin_mean, y_bin_mean])
