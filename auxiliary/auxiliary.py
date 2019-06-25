@@ -2,8 +2,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from localreg import *
-from statsmodels.nonparametric.smoothers_lowess import lowess
+from auxiliary.localreg import *
 
 def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None, frac=None, width=20.1, deg=1):
     """ Plots a Regression Discontinouity Design graph. For this, binned observations are portrayed in a scatter plot. 
@@ -86,31 +85,111 @@ def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None, frac=None, wi
     
     #### TODO: As a validity test: see if x_bin is as long as x_var is!
     
-    # Implement local polynomial regression 
+    # Implement local polynomial regression, calculate fitted values as well as estimated betas
     # This is estimated seperatly for the untreadted state (0) and the treated state (1)
 
     df0 = pd.DataFrame(data={
         "x0":data.loc[data[x_variable]<0][x_variable], 
         "y0":data.loc[data[x_variable]<0][y_variable],
     }).sort_values(by="x0")
-    df0["y0_hat"] = localreg(x=df0["x0"].to_numpy(), y=df0["y0"].to_numpy(), degree=deg, kernel=tricube, frac=frac, width=width)
+    df0["y0_hat"] = localreg(x=df0["x0"].to_numpy(), y=df0["y0"].to_numpy(), degree=deg, kernel=tricube, frac=frac, width=width)["y"]
+    for i in range(deg + 1):
+        df0["beta_hat_" + str(i)] = localreg(x=df0["x0"].to_numpy(), y=df0["y0"].to_numpy(), degree=deg, kernel=tricube, frac=frac, width=width)["beta"][:,i]
 
     df1 = pd.DataFrame(data={
         "x1":data.loc[data[x_variable]>0][x_variable], 
         "y1":data.loc[data[x_variable]>0][y_variable],
     }).sort_values(by="x1")
-    df1["y1_hat"] = localreg(x=df1["x1"].to_numpy(), y=df1["y1"].to_numpy(), degree=deg, kernel=tricube, frac=frac, width=width)
-  
+    df1["y1_hat"] = localreg(x=df1["x1"].to_numpy(), y=df1["y1"].to_numpy(), degree=deg, kernel=tricube, frac=frac, width=width)["y"]
+    for i in range(deg + 1):
+        df1["beta_hat_" + str(i)] = localreg(x=df1["x1"].to_numpy(), y=df1["y1"].to_numpy(), degree=deg, kernel=tricube, frac=frac, width=width)["beta"][:,i]
+    
+    # Calculate local standard errors
+    y0_se = local_se(df=df0, kernel=tricube, deg=deg, width=width)
+    y1_se = local_se(df=df1, kernel=tricube, deg=deg, width=width)
+
+    
+    
+    # Calculate confidence intervals
+    #### TODO: This certainly would be faster if I would not use dictionaries!
+    y0_upper_ci = np.empty(len(df0["y0"]))
+    y0_lower_ci = np.empty(len(df0["y0"]))
+    y1_upper_ci = np.empty(len(df1["y1"]))
+    y1_lower_ci = np.empty(len(df1["y1"]))
+
+    
+
+    for count, element in enumerate(df0["x0"].array): 
+        y0_upper_ci[count] = df0["y0_hat"].iloc[count] + 1.96*y0_se[str(element)] 
+
+    for count, element in enumerate(df0["x0"].array):
+        y0_lower_ci[count] = df0["y0_hat"].iloc[count] - 1.96*y0_se[str(element)]
+
+    for count, element in enumerate(df1["x1"].array):
+        y1_upper_ci[count] = df1["y1_hat"].iloc[count] + 1.96*y1_se[str(element)] 
+
+    for count, element in enumerate(df1["x1"].array):
+        y1_lower_ci[count] = df1["y1_hat"].iloc[count] - 1.96*y1_se[str(element)] 
+
     # Plot the RDD-Graph
     # fittet lines
     plt.plot(df0.x0, df0.y0_hat, color='r')
     plt.plot(df1.x1, df1.y1_hat, color='r')
+
+    plt.plot(df0.x0, y0_upper_ci, color="black")
+    plt.plot(df0.x0, y0_lower_ci, color="black")
+    plt.plot(df1.x1, y1_upper_ci, color="black")
+    plt.plot(df1.x1, y1_lower_ci, color="black")
+
     
+    
+    # Plot the RDD-Graph
+    # fittet lines
+    plt.plot(df0.x0, df0.y0_hat, color='r')
+    plt.plot(df1.x1, df1.y1_hat, color='r')
+
     # labels
     plt.title(label='Figure 3: Regression Discontinuity Design Plot')
     plt.xlabel('Binned margin of victory')
     plt.ylabel('Normalized rank improvement')
     plt.show
     
+
+
+    return df0, y0_upper_ci#df0, df1
+
+
+
+
+def local_se(df, kernel, deg, width):
     
-    return #pd.DataFrame(data=[x_bin_mean, y_bin_mean])
+    if deg != 1:
+        print("WARNING: function local_se is currently hard-coded for polynomials of degree 1 and will deliver wrong results for anything else!")
+
+    x = df[df.columns[0]].array
+    cap_x = pd.DataFrame(data = {"constant": np.ones(len(x)), "x": x})
+    beta_hat_covariances = {}
+    y_hat_se = {}
+    for count, element in enumerate(x):
+
+        # get weights from the local regression
+        weights = kernel(np.abs(x-element)/width)
+
+        # only consider values with a weight > 0
+        inds = np.where(np.abs(weights)>1e-10)[0]
+        
+
+
+        ######### CAUTION: This area is hard-coded for a polynomial of degree 1######### 
+        rel_data = df.iloc[inds]
+        beta_cov = np.cov(m=rel_data[["beta_hat_0", "beta_hat_1"]], rowvar=0) ### problem here, arguments for np.cov are passed in a weird way!!
+        beta_hat_covariances.update({str(element): beta_cov})
+
+        
+        se = np.dot(cap_x.loc[count,:].array, beta_hat_covariances[str(element)])
+        se = np.dot(se, np.transpose(cap_x.loc[count,:].array))
+
+        y_hat_se.update({str(element): np.sqrt(se)})
+    return y_hat_se
+
+
