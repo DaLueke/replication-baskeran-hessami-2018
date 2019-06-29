@@ -9,4 +9,4 @@ Original data used by the authors for this study can be found in subdirectory \d
 Auxiliary functions that are used in the jupyter notebook are stored in subdirectory \auxiliary.
 
 
-[![Build Status](https://travis-ci.org/HumanCapitalAnalysis/student-project-template.svg?branch=master)](https://travis-ci.org/HumanCapitalAnalysis/student-project-template) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](HumanCapitalAnalysis/student-project-template/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/HumanCapitalAnalysis/student-project-DaLueke.svg?branch=master)](https://travis-ci.org/HumanCapitalAnalysis/student-project-DaLueke) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](HumanCapitalAnalysis/student-project-template/blob/master/LICENSE)
