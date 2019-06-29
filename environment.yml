@@ -9,4 +9,4 @@ dependencies:
 - scipy
 - pip
 - pip:
-- grmpy
+  - grmpy
