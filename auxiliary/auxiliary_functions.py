@@ -1,12 +1,17 @@
-""" This file contains auxiliary functions that are used in the student-project-DaLueke.py file.""" 
+""" This file contains auxiliary functions that are used in the 
+student-project-DaLueke jupyter notebook file.""" 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from auxiliary.localreg import *
+import matplotlib.pyplot as plt
+
+
 
 def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None, frac=None, width=20.1, deg=1):
-    """ Plots a Regression Discontinouity Design graph. For this, binned observations are portrayed in a scatter plot. 
-    Uses non-parametric regression (local polynomial estimation) to fit a curve on the original observations.
+    """ Plots a Regression Discontinouity Design graph. For this, binned 
+    observations are portrayed in a scatter plot. 
+    Uses non-parametric regression (local polynomial estimation) to fit a curve 
+    on the original observations.
     
     Args: 
         data: contains DataFrame that contains the data to plot (DataFrame)
@@ -154,17 +159,18 @@ def rdd_plot(data, x_variable, y_variable, nbins=20, ylimits=None, frac=None, wi
     plt.ylabel('Normalized rank improvement')
     plt.show
     
-
-
-    return df0, y0_upper_ci#df0, df1
-
-
-
+    return 
 
 def local_se(df, kernel, deg, width):
+    """ This function is used to calculate the local standard errors, based on 
+    estimation results of a local polynomial regression.
+    """
     
     if deg != 1:
-        print("WARNING: function local_se is currently hard-coded for polynomials of degree 1 and will deliver wrong results for anything else!")
+        print("WARNING: function local_se is currently hard-coded for ", 
+            "polynomials of degree 1 and will deliver wrong results for ",
+            "anything else!"
+            )
 
     x = df[df.columns[0]].array
     cap_x = pd.DataFrame(data = {"constant": np.ones(len(x)), "x": x})
@@ -180,16 +186,30 @@ def local_se(df, kernel, deg, width):
         
 
 
-        ######### CAUTION: This area is hard-coded for a polynomial of degree 1######### 
+        ### CAUTION: This area is hard-coded for a polynomial of degree 1 ###
         rel_data = df.iloc[inds]
-        beta_cov = np.cov(m=rel_data[["beta_hat_0", "beta_hat_1"]], rowvar=0) ### problem here, arguments for np.cov are passed in a weird way!!
+        beta_cov = np.cov(m=rel_data[["beta_hat_0", "beta_hat_1"]], rowvar=0) 
         beta_hat_covariances.update({str(element): beta_cov})
 
         
-        se = np.dot(cap_x.loc[count,:].array, beta_hat_covariances[str(element)])
+        se = np.dot(
+            cap_x.loc[count,:].array, beta_hat_covariances[str(element)]
+            )
         se = np.dot(se, np.transpose(cap_x.loc[count,:].array))
 
         y_hat_se.update({str(element): np.sqrt(se)})
     return y_hat_se
 
 
+def calculate_weights(df, bandwidth):
+    """ This function calculates the weights for the weightes linear regression
+    which is performed to estimate the effect of a female mayor around the 
+    cutoff in the regression discontinuity analysis.
+
+    Calculations follow the code provided in the bandwidth_and_weights.ado file
+    step by step.
+    """
+    temp1 = df["margin_1"] / bandwidth
+    ind = abs(temp1)<=1
+    temp2 = 1 - abs(temp1)
+    return temp2*ind
