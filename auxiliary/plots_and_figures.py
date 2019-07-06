@@ -67,3 +67,89 @@ def plot_observations_municipalities_candidates(df):
     plt.legend()
     
     return
+
+
+def summary_stats(df):
+
+    df_main_dataset = df
+
+    variables = np.array(["gewinn_norm", 
+    	"age",
+    	"non_university_phd",
+    	"university",
+    	"phd",
+    	"architect", 
+    	"businessmanwoman", 
+    	"engineer", 
+    	"lawyer", 
+    	"civil_administration", 
+    	"teacher", 
+    	"employed",
+    	"selfemployed", 
+    	"student",
+    	"retired",
+    	"housewifehusband"
+    ])
+
+    measures = np.array(["Count", 
+    	"Mean",
+    	"SD",
+    	"Min",
+    	"Max"    
+    ])
+
+    arrays = [np.repeat(a=np.array(["All candidates", "Female candidates"]), repeats=5), 
+              np.tile(measures, 2)]
+
+    summary_stat = pd.DataFrame(index=variables, columns=arrays)
+    for category in ["All candidates", "Female candidates"]:
+        if category == "Female candidates":
+            relevant_slice = df_main_dataset["female"]==1
+        else:
+            relevant_slice = df_main_dataset.index
+
+        for i, var in enumerate(variables):
+
+            row = {}
+            row["Count"] = df_main_dataset.loc[relevant_slice, var].count()
+            row["Mean"] = df_main_dataset.loc[relevant_slice, var].mean()
+            row["SD"] = df_main_dataset.loc[relevant_slice, var].std()
+            row["Min"] = df_main_dataset.loc[relevant_slice, var].min()
+            row["Max"] = df_main_dataset.loc[relevant_slice, var].max()
+
+            for measure in measures:
+                summary_stat[category][measure][var] = row[measure]
+
+    return summary_stat
+
+
+def plot_observations(df, s=1):
+    """ Scatter plot for observed data on normalized rank improvement 
+    of a female council candidate and the margin of victory of a female 
+    mayor in that municipality.
+    
+    Args:
+        - df: DataFrame that contains the observations (main_dataset.dta)
+        - s: share of observations to be plotted
+    
+    """
+    
+    obs = df.sample(frac=s)
+    plt.figure(figsize=(10,10))
+    plt.scatter(x=obs['margin_1'], y=obs['gewinn_norm'], marker = 'x', s=25, color='k', linewidth=1)
+    plt.title(label='Figure 1: Margin of victory of a female mayor and \n list rank improvements of females in subsequent council elections')
+    plt.xlabel('Margin of Victory')
+    plt.ylabel('Rank Improvements')
+    plt.grid()
+    plt.show()
+    
+
+def hist_council_sizes(df, bins):
+    """ Plots a histogram for the number of seats in councils.
+    """
+    plt.hist(df.drop_duplicates(subset=['gkz_jahr'])['council_size'], bins=bins)
+    plt.title(label='Figure 2: Distribution of council sizes')
+    plt.xlabel('Number of seats')
+    plt.ylabel('Number of councils')
+    plt.grid()
+    plt.show()

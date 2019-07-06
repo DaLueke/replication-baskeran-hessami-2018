@@ -213,3 +213,26 @@ def calculate_weights(df, bandwidth):
     ind = abs(temp1)<=1
     temp2 = 1 - abs(temp1)
     return temp2*ind
+
+
+def plot_observations(df, s=1):
+    """ Scatter plot for observed data on normalized rank improvement 
+    of a female council candidate and the margin of victory of a female 
+    mayor in that municipality.
+    
+    Args:
+        - df: DataFrame that contains the observations (main_dataset.dta)
+        - s: share of observations to be plotted
+    
+    """
+    
+    obs = df.sample(frac=s)
+    plt.figure(figsize=(10,10))
+    plt.scatter(x=obs['margin_1'], y=obs['gewinn_norm'], marker = 'x', s=25, color='k', linewidth=1)
+    plt.title(label='Figure 1: Margin of victory of a female mayor and \n list rank improvements of females in subsequent council elections')
+    plt.xlabel('Margin of Victory')
+    plt.ylabel('Rank Improvements')
+    plt.grid()
+    plt.show()
+    
+    return
