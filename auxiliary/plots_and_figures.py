@@ -17,6 +17,10 @@ def plot_observations_municipalities_candidates(df):
     df_main_dataset = df
     width = 2.5
     nyears = np.arange(len(df_main_dataset.groupby("jahr").nunique()))
+
+    plt.figure().set_figheight(5)
+    plt.figure().set_figwidth(8)
+    
     # first subplot
     plt.subplot(1, 2, 1)
     plt.bar(x=nyears*3, 
@@ -28,6 +32,11 @@ def plot_observations_municipalities_candidates(df):
     label=df_main_dataset.jahr.unique().astype(int)
     for i in range(len(nyears)):
         plt.text(x=nyears[i]*3 - width/4, y=df_main_dataset.groupby("jahr").gkz.nunique()[label[i]] + 5, s=df_main_dataset.groupby("jahr").gkz.nunique()[label[i]])
+
+    # Title of table
+    plt.title("Number of Municipalities with \nknown characteristitcs")
+    
+    # Adjust layout
     plt.grid(True)
 
     # Second subplot, females
@@ -61,12 +70,16 @@ def plot_observations_municipalities_candidates(df):
                  s=df_main_dataset.loc[df_main_dataset["female"]==0].groupby("jahr").gewinn_norm.count()[label[i]],
         )
 
-    # Adjust layout
+    # Add grid, title and legend
     plt.grid(True)
-    plt.tight_layout()
+    plt.title("Number of observed candidates per \nmayor election period, split by gender.")
     plt.legend()
-    
-    return
+
+    # Adjust layout
+    plt.subplots_adjust(wspace=1)    
+    # Store plot and prevent it from showing in code cell.
+    plt.savefig("out/figure_1.png")
+    plt.close()
 
 
 def summary_stats(df):
