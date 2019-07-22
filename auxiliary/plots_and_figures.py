@@ -154,7 +154,8 @@ def plot_observations(df, s=1):
     plt.xlabel('Margin of Victory')
     plt.ylabel('Rank Improvements')
     plt.grid()
-    plt.show()
+    plt.savefig("out/figure_2.png")
+    plt.close()
     
 
 def hist_council_sizes(df, bins):
@@ -165,4 +166,5 @@ def hist_council_sizes(df, bins):
     plt.xlabel('Number of seats')
     plt.ylabel('Number of councils')
     plt.grid()
-    plt.show()
+    plt.savefig("out/figure_3.png")
+    plt.close()
