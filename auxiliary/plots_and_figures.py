@@ -150,7 +150,7 @@ def plot_observations(df, s=1):
     obs = df.sample(frac=s)
     plt.figure(figsize=(10,10))
     plt.scatter(x=obs['margin_1'], y=obs['gewinn_norm'], marker = 'x', s=25, color='k', linewidth=1)
-    plt.title(label='Figure 1: Margin of victory of a female mayor and \n list rank improvements of females in subsequent council elections')
+    plt.title(label='Figure 2: Margin of victory of a female mayor and \n list rank improvements of females in subsequent council elections')
     plt.xlabel('Margin of Victory')
     plt.ylabel('Rank Improvements')
     plt.grid()
@@ -162,7 +162,7 @@ def hist_council_sizes(df, bins):
     """ Plots a histogram for the number of seats in councils.
     """
     plt.hist(df.drop_duplicates(subset=['gkz_jahr'])['council_size'], bins=bins)
-    plt.title(label='Figure 2: Distribution of council sizes')
+    plt.title(label='Figure 3: Distribution of council sizes')
     plt.xlabel('Number of seats')
     plt.ylabel('Number of councils')
     plt.grid()
