@@ -2,8 +2,12 @@
 student-project-DaLueke jupyter notebook file.""" 
 import numpy as np
 import pandas as pd
-from auxiliary.localreg import *
+
 import matplotlib.pyplot as plt
+
+from scipy.stats import ttest_ind
+from auxiliary.localreg import *
+
 
 
 
@@ -215,24 +219,106 @@ def calculate_weights(df, bandwidth):
     return temp2*ind
 
 
-def plot_observations(df, s=1):
-    """ Scatter plot for observed data on normalized rank improvement 
-    of a female council candidate and the margin of victory of a female 
-    mayor in that municipality.
-    
-    Args:
-        - df: DataFrame that contains the observations (main_dataset.dta)
-        - s: share of observations to be plotted
+def ttest_mean_characteristics(df, bw):
+    """ Function used to calculate a t-test for difference in means of the
+    characteristics of municipalities. The data merging process is left in 
+    the notebook on purpose so one can easily see and change the difference
+    in the mergin process between the notebook and the original article.
+
+    Input:
+    df: DataFrame that contains the characteristics of all 
+        municipalities as well as data on  mayor elctions.
+    bw: A list of bandwidths for that the t-test will be performed.
+
+    Returns:
+    rslt_dict:  A dictionary with one key for every bandwidth that is set
+                in the inputs. Each value is a dataframe containing the
+                charactersitics and the t-test result.
     
     """
     
-    obs = df.sample(frac=s)
-    plt.figure(figsize=(10,10))
-    plt.scatter(x=obs['margin_1'], y=obs['gewinn_norm'], marker = 'x', s=25, color='k', linewidth=1)
-    plt.title(label='Figure 1: Margin of victory of a female mayor and \n list rank improvements of females in subsequent council elections')
-    plt.xlabel('Margin of Victory')
-    plt.ylabel('Rank Improvements')
-    plt.grid()
-    plt.show()
+    # Adjust name of input df
+    df_pretreatment_characteristics = df
+    bandwidths=bw
+
+    rslt_dict = {}
+
+    for bw in bandwidths:
+        data = df_pretreatment_characteristics.loc[abs(df_pretreatment_characteristics["margin_1"])<bw]
+
+        # Build a dataframe that resembles table A4: means, differences in means, se and n for characterstics
+        # in munis where men won and those where women won.
+        index = ["log_bevoelkerung", 
+                 "log_flaeche", 
+                 "log_debt_pc", 
+                 "log_tottaxrev_pc", 
+                 "log_tot_beschaeft_pc", 
+                 "log_female_share_totbesch", 
+                 "log_gemeinde_beschaef_pc", 
+                 "log_female_sh_gem_besch",
+                 "log_prod_share_tot",
+                 "log_female_share_prod",
+                ]
+        gender = ["female_mayor", "male_mayor"]
+        df = pd.DataFrame(index=index, columns=gender)
+
+        # Calculate means, differences in means and number of obs.
+        for i in gender: 
+            df[i] = data.loc[data[i] == 1, index].mean()    
+
+        df["Diff."] = df.loc[:,gender[0]] - df.loc[:,gender[1]]    
+        df["Obs."] = data[index].count()
+
+        # Perform t-test and report p-values
+        for i, v in enumerate(index):
+            statistic, p_value = ttest_ind(
+                data.loc[data["female_mayor"] == 1,index[i]].dropna(), 
+                data.loc[data["female_mayor"] == 0,index[i]].dropna()
+                     )
+            df.loc[v, "t_test_p"] = p_value.round(3)
+
+        rslt_dict[bw] = df
+    return rslt_dict
+
+
+def party_affiliation(df, bw):
     
-    return
+    # adjust name of input df
+    df_mayor_election_data = df
+    
+    bandwidths = bw
+    rslt_dict = {}
+    parties = ["cdu", "spd", "other_party"]
+
+    # loop over different bandwiths
+    for bw in bandwidths:
+        container = pd.DataFrame(index=parties)
+
+        # Select data on party affiniation of mayors that won mixed-gender elections
+        data = df_mayor_election_data.loc[
+            (df_mayor_election_data["rdd_sample"]==1) & (abs(df_mayor_election_data["margin_1"])<bw)
+        ]
+
+        # loop over paties (only spd, cdu and "other" are available) and calculate the shares
+        # of elected mayors that are affiliated with the particular party
+        for p in parties:
+            container.loc[p, "female_mayor_shares"] = np.round(
+                data.loc[data["female_mayor"]==1, p + "_winner"].sum() / data["female_mayor"].sum(), 3
+            )
+            container.loc[p, "male_mayor_shares"] = np.round(
+                data.loc[data["female_mayor"]==0, p + "_winner"].sum() / data["male_mayor"].sum(), 3
+            )
+
+            # Calculate t-test for difference in means
+            statistic, p_value = ttest_ind(
+                data.loc[data["female_mayor"]==1, p + "_winner"], 
+                data.loc[data["male_mayor"]==1, p + "_winner"]
+            )
+            container.loc[p, "p_value"] = p_value.round(3)
+
+        # calculate differences in shares of party affiliation between males and females
+        container["difference"] = container["female_mayor_shares"] - container["male_mayor_shares"]
+
+        rslt_dict[bw] = container
+        
+    return rslt_dict

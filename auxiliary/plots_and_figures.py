@@ -78,7 +78,7 @@ def plot_observations_municipalities_candidates(df):
     # Adjust layout
     plt.subplots_adjust(wspace=1)    
     # Store plot and prevent it from showing in code cell.
-    plt.savefig("out/figure_1.png")
+    plt.savefig("out/figure1.png")
     plt.close()
 
 
@@ -154,7 +154,7 @@ def plot_observations(df, s=1):
     plt.xlabel('Margin of Victory')
     plt.ylabel('Rank Improvements')
     plt.grid()
-    plt.savefig("out/figure_2.png")
+    plt.savefig("out/figure2.png")
     plt.close()
     
 
@@ -166,5 +166,5 @@ def hist_council_sizes(df, bins):
     plt.xlabel('Number of seats')
     plt.ylabel('Number of councils')
     plt.grid()
-    plt.savefig("out/figure_3.png")
+    plt.savefig("out/figure3.png")
     plt.close()
