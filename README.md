@@ -10,3 +10,4 @@ Auxiliary functions that are used in the jupyter notebook are stored in subdirec
 
 
 [![Build Status](https://travis-ci.org/HumanCapitalAnalysis/student-project-DaLueke.svg?branch=master)](https://travis-ci.org/HumanCapitalAnalysis/student-project-DaLueke) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](HumanCapitalAnalysis/student-project-template/blob/master/LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
