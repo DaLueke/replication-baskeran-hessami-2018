@@ -1,5 +1,5 @@
 
-<a href="https://nbviewer.jupyter.org/github/HumanCapitalAnalysis/student-project-DaLueke/student_project.ipynb"
+<a href="https://nbviewer.jupyter.org/github/HumanCapitalAnalysis/student-project-DaLueke/blob/master/student_project.ipynb"
    target="_parent">
    <img align="center" 
   src="https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.png" 
