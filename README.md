@@ -1,4 +1,16 @@
-**This repository is still work in progress. Therefore, it is yet incomplete and may contain errors.**
+
+<a href="https://nbviewer.jupyter.org/github/HumanCapitalAnalysis/student-project-DaLueke/student_project.ipynb"
+   target="_parent">
+   <img align="center" 
+  src="https://raw.githubusercontent.com/jupyter/design/master/logos/Badges/nbviewer_badge.png" 
+      width="109" height="20"> 
+</a> 
+<a href="https://mybinder.org/v2/gh/HumanCapitalAnalysis/student-project-DaLueke/master?filepath=student_project.ipynb"
+    target="_parent">
+    <img align="center"
+       src="https://mybinder.org/badge_logo.svg"
+       width="109" height="20">
+</a>
 
 # Student project: Replication of Baskeran & Hessami (2018). 
 This repository presents a replication of Baskaran, T., & Hessami, Z. (2018). Does the election of a female leader clear the way for more women in politics?. *American Economic Journal: Economic Policy*, 10(3), 95-121. 
