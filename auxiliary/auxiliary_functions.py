@@ -179,7 +179,7 @@ def rdd_plot(
     plt.plot(df1.x1, df1.y1_hat, color="r")
 
     # labels
-    plt.title(label="Figure 3: Regression Discontinuity Design Plot")
+    plt.title(label="Figure 5: Regression Discontinuity Design Plot")
     plt.xlabel("Binned margin of victory")
     plt.ylabel("Normalized rank improvement")
     plt.show
