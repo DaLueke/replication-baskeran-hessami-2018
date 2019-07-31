@@ -86,8 +86,6 @@ def rdd_plot(
         plt.ylim(ylimits)
     plt.grid()
 
-    # TODO: As a validity test: see if x_bin is as long as x_var is!
-
     # Implement local polynomial regression, calculate fitted values as well as
     # estimated betas.
     # This is estimated seperatly for the untreadted state 0 and the treated state 1
