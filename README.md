@@ -12,7 +12,7 @@
        width="109" height="20">
 </a>
 
-# Student project: Replication of Baskeran & Hessami (2018). 
+# Student project: Replication of Baskeran & Hessami (2018)
 This repository presents a replication of [Baskaran, T., & Hessami, Z. (2018)](https://www.aeaweb.org/articles?id=10.1257/pol.20170045). Does the election of a female leader clear the way for more women in politics? *American Economic Journal: Economic Policy*, 10(3), 95-121. The replication is accompanied by a critical review and some independend contributions towards the research question asked in the article.
 
 ## Abstract
